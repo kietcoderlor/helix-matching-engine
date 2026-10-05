@@ -5,8 +5,8 @@ Do not claim a feature in the README until this file and the tests agree.
 
 | Area | Status | Evidence |
 |------|--------|----------|
-| Repository layout, CMake, test harness | in progress | this milestone |
-| Core types / protocol spec | not started | |
+| Repository layout, CMake, test harness | done | M1 tests pass |
+| Core types / protocol spec | in progress | this milestone |
 | Order book | not started | |
 | Matching, TIF, cancel/modify | not started | |
 | Networking (poller, framing, server) | not started | |
