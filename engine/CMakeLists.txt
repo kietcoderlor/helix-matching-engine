@@ -3,6 +3,7 @@ set(HELIX_ENGINE_INCLUDE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/include)
 add_library(helix_core STATIC
   src/version.cpp
   src/codec.cpp
+  src/order_book.cpp
 )
 target_include_directories(helix_core
   PUBLIC
@@ -20,6 +21,7 @@ add_executable(helix_tests
   tests/test_version.cpp
   tests/test_types.cpp
   tests/test_protocol.cpp
+  tests/test_order_book.cpp
 )
 target_include_directories(helix_tests PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/tests)
 target_link_libraries(helix_tests PRIVATE helix_core)
