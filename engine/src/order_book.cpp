@@ -133,6 +133,11 @@ const RestingOrder* OrderBook::find_by_client(ParticipantId owner,
   return find(it->second);
 }
 
+RestingOrder* OrderBook::find_by_client(ParticipantId owner, ClientOrderId client_id) {
+  return const_cast<RestingOrder*>(
+      static_cast<const OrderBook*>(this)->find_by_client(owner, client_id));
+}
+
 std::vector<BookLevel> OrderBook::depth(Side side, std::size_t levels) const {
   std::vector<BookLevel> out;
   auto fill = [&](const auto& m) {

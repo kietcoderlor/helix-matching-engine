@@ -68,6 +68,7 @@ class OrderBook {
   [[nodiscard]] RestingOrder* find(OrderId id);
   [[nodiscard]] const RestingOrder* find_by_client(ParticipantId owner,
                                                    ClientOrderId client_id) const;
+  [[nodiscard]] RestingOrder* find_by_client(ParticipantId owner, ClientOrderId client_id);
 
   [[nodiscard]] std::vector<BookLevel> depth(Side side, std::size_t levels) const;
 
