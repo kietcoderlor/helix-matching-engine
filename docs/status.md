@@ -8,7 +8,7 @@ Do not claim a feature in the README until this file and the tests agree.
 | Repository layout, CMake, test harness | done | M1 tests pass |
 | Core types / protocol spec | done | protocol unit tests |
 | Order book | done | test_order_book.cpp |
-| Matching, TIF, cancel/modify | not started | |
+| Matching, TIF, cancel/modify | matching core done; TIF/cancel tests next | test_matching.cpp |
 | Networking (poller, framing, server) | not started | |
 | Pipeline / backpressure | not started | |
 | Gateway / PostgreSQL | not started | |
