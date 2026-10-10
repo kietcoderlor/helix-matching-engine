@@ -24,6 +24,8 @@ add_executable(helix_tests
   tests/test_protocol.cpp
   tests/test_order_book.cpp
   tests/test_matching.cpp
+  tests/test_cancel_modify.cpp
+  tests/test_tif_stp.cpp
 )
 target_include_directories(helix_tests PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/tests)
 target_link_libraries(helix_tests PRIVATE helix_core)
