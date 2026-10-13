@@ -1,0 +1,9 @@
+p=1 ACCEPTED eid=1 cid=1 SELL px=100 qty=5
+p=0 DELTA SELL px=100 qty=5 n=1
+p=2 ACCEPTED eid=2 cid=1 BUY px=100 qty=3
+p=1 FILL eid=1 SELL px=100 qty=3 rem=2 liq=M
+p=2 FILL eid=2 BUY px=100 qty=3 rem=0 liq=T
+p=0 TRADE tid=1 px=100 qty=3 ag=BUY
+p=0 DELTA SELL px=100 qty=2 n=1
+p=1 CANCELED eid=1 qty=2 reason=0
+p=0 DELTA SELL px=100 qty=0 n=0
