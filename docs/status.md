@@ -10,7 +10,7 @@ Do not claim a feature in the README until this file and the tests agree.
 | Order book | done | test_order_book.cpp |
 | Matching, TIF, cancel/modify | done | test_matching.cpp, test_cancel_modify.cpp, test_tif_stp.cpp |
 | Deterministic replay | done | test_replay.cpp, tapes/cross.golden |
-| Networking (poller, framing, server) | poller/sockets done | test_net.cpp |
+| Networking (poller, framing, server) | done | test_net.cpp, test_server.cpp |
 | Pipeline / backpressure | not started | |
 | Gateway / PostgreSQL | not started | |
 | React terminal | not started | |
