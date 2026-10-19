@@ -19,6 +19,22 @@ Connection* TcpServer::connection(ConnectionId id) {
   return it == conns_.end() ? nullptr : &it->second;
 }
 
+void TcpServer::try_flush(ConnectionId id) {
+  Connection* conn = connection(id);
+  if (conn == nullptr) {
+    return;
+  }
+  if (!conn->on_writable()) {
+    drop(id);
+    return;
+  }
+  if (conn->write_pending()) {
+    poller_->mod(conn->fd(), Interest::Read | Interest::Write);
+  } else {
+    poller_->mod(conn->fd(), Interest::Read);
+  }
+}
+
 void TcpServer::close(ConnectionId id, CloseReason reason) {
   const auto it = conns_.find(id);
   if (it == conns_.end()) {

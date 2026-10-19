@@ -28,6 +28,8 @@ class TcpServer {
 
   Connection* connection(ConnectionId id);
   void close(ConnectionId id, CloseReason reason);
+  // After another thread-stage enqueues bytes, flush or arm EPOLLOUT.
+  void try_flush(ConnectionId id);
 
  private:
   void accept_ready();

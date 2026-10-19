@@ -90,6 +90,8 @@ std::vector<Event> MatchingEngine::execute(const Command& command) {
           return on_cancel(command, payload);
         } else if constexpr (std::is_same_v<T, ModifyOrderCommand>) {
           return on_modify(command, payload);
+        } else if constexpr (std::is_same_v<T, SubscribeCommand>) {
+          return on_subscribe(command, payload);
         } else {
           Event e = base_event(command, EventScope::Connection, kInvalidSymbol);
           e.payload = ErrorEvent{RejectReason::Unauthorized, command.seq};
@@ -393,6 +395,23 @@ std::vector<Event> MatchingEngine::on_modify(const Command& cmd, const ModifyOrd
   }
   maybe_check(*found_book);
   return out;
+}
+
+std::vector<Event> MatchingEngine::on_subscribe(const Command& cmd, const SubscribeCommand& s) {
+  auto bit = books_.find(s.symbol);
+  if (bit == books_.end()) {
+    Event e = base_event(cmd, EventScope::Connection, s.symbol);
+    e.payload = ErrorEvent{RejectReason::InvalidSymbol, cmd.seq};
+    return {e};
+  }
+  Event e = base_event(cmd, EventScope::Public, s.symbol);
+  e.connection = cmd.connection;
+  BookSnapshotEvent snap;
+  snap.symbol = s.symbol;
+  snap.bids = bit->second.depth(Side::Buy, config_.snapshot_depth);
+  snap.asks = bit->second.depth(Side::Sell, config_.snapshot_depth);
+  e.payload = std::move(snap);
+  return {e};
 }
 
 }  // namespace helix

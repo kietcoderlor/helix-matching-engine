@@ -37,6 +37,7 @@ class MatchingEngine {
   std::vector<Event> on_new(const Command& cmd, const NewOrderCommand& n);
   std::vector<Event> on_cancel(const Command& cmd, const CancelOrderCommand& c);
   std::vector<Event> on_modify(const Command& cmd, const ModifyOrderCommand& m);
+  std::vector<Event> on_subscribe(const Command& cmd, const SubscribeCommand& s);
 
   void match(const Command& cmd, OrderBook& book, RestingOrder& aggressor,
              std::vector<Event>& out);
