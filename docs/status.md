@@ -11,7 +11,8 @@ Do not claim a feature in the README until this file and the tests agree.
 | Matching, TIF, cancel/modify | done | test_matching.cpp, test_cancel_modify.cpp, test_tif_stp.cpp |
 | Deterministic replay | done | test_replay.cpp, tapes/cross.golden |
 | Networking (poller, framing, server) | done | test_net.cpp, test_server.cpp |
-| Pipeline / backpressure | not started | |
+| Pipeline / backpressure | done | test_spsc.cpp, test_pipeline.cpp |
+| Multi-symbol + event routing | done | test_routing.cpp |
 | Gateway / PostgreSQL | not started | |
 | React terminal | not started | |
 | Docker / benchmarks | not started | |

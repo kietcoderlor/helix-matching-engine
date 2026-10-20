@@ -9,6 +9,7 @@ add_library(helix_core STATIC
   src/net/socket.cpp
   src/net/connection.cpp
   src/net/server.cpp
+  src/engine_service.cpp
 )
 target_include_directories(helix_core
   PUBLIC
@@ -45,6 +46,9 @@ add_executable(helix_tests
   tests/test_replay.cpp
   tests/test_net.cpp
   tests/test_server.cpp
+  tests/test_spsc.cpp
+  tests/test_pipeline.cpp
+  tests/test_routing.cpp
 )
 target_include_directories(helix_tests PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/tests)
 target_link_libraries(helix_tests PRIVATE helix_core)
