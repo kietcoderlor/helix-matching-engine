@@ -3,6 +3,7 @@
 #include "helix/codec.hpp"
 
 #include <chrono>
+#include <iostream>
 #include <stdexcept>
 #include <thread>
 #include <utility>
@@ -119,6 +120,7 @@ void EngineService::on_frame(net::Connection& conn, const DecodedFrame& frame) {
     session.participant = login.participant;
     conn.set_participant(login.participant);
     by_participant_[login.participant] = conn.id();
+    std::clog << "login conn=" << conn.id() << " participant=" << login.participant << '\n';
     Event ack;
     ack.scope = EventScope::Connection;
     ack.connection = conn.id();
