@@ -1,0 +1,7 @@
+build/
+.vs/
+node_modules/
+dist/
+.git/
+.env
+*.log
