@@ -34,6 +34,11 @@ add_executable(helix_replay
 )
 target_link_libraries(helix_replay PRIVATE helix_core)
 
+add_executable(helix_bench
+  bench/bench_main.cpp
+)
+target_link_libraries(helix_bench PRIVATE helix_core)
+
 add_executable(helix_tests
   tests/test_main.cpp
   tests/test_version.cpp
