@@ -232,6 +232,15 @@ padded or backdated.
 5. Interview FAQ
 6. Status file brought in line with the tree
 
+## Commit-count note
+
+The 15×6 = 90 figure was a planning target, not a quota. Early matching
+milestones sometimes needed fewer commits because cancel/modify/TIF share
+one `execute()` loop (splitting that loop across cosmetic commits would
+have been dishonest). Later gateway/terminal/docs commits follow the
+same rule: one cohesive change per commit, tree left buildable, no
+empty or backdated history.
+
 ## Non-goals
 
 - No real exchange connectivity, market data feeds, or custody
