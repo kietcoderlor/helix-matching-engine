@@ -10,7 +10,7 @@
 
 A high-performance, low-latency **simulated limit-order exchange and matching engine** written in **modern C++20**, paired with an asynchronous **TypeScript / WebSocket gateway** and a real-time **React trading terminal**.
 
-Designed from first principles for **Trading System Engineer (TSE)** interviews: highlights thread isolation, lock-free SPSC queues, strict deterministic matching, binary framing, and measured execution latency without third-party matching dependencies.
+Designed from first principles with a focus on low-latency trading systems engineering: highlights thread isolation, lock-free SPSC queues, strict deterministic matching, binary framing, and measured execution latency without third-party matching dependencies.
 
 > ⚠️ **Disclaimer:** This is an educational trading simulator. It is **not** connected to any real exchange, does **not** process real funds, and is **not** intended as production financial infrastructure.
 
@@ -243,21 +243,6 @@ cd terminal && npm run build
 
 ---
 
-## 💬 Interview Discussion Topics & Trade-offs
-
-Detailed design rationales and architectural trade-offs are documented in [docs/interview.md](docs/interview.md):
-
-1. **Why a single matching thread instead of thread-per-symbol?**  
-   Simplicity and guaranteed global ordering. A single modern CPU core can match > 1 million orders per second; contention overhead from synchronizing multi-threaded books often exceeds single-threaded latency.
-2. **Why SPSC ring buffers over MPSC / Channels?**  
-   Strict isolation: exactly one I/O thread pushes to exactly one matching thread. Wait-free ring buffers eliminate cache-line bouncing and lock contention.
-3. **Handling backpressure without dropping orders:**  
-   If the command ring is full, the ingress thread pauses socket consumption, letting TCP window flow-control apply natural backpressure back to clients. An exchange must never silently drop an order.
-4. **Order modification semantics:**  
-   Quantity reductions keep priority queue position. Quantity increases or price modifications cancel the resting node and re-enter the queue at the tail.
-
----
-
 ## 📂 Project Structure
 
 ```text
@@ -277,7 +262,7 @@ Detailed design rationales and architectural trade-offs are documented in [docs/
 │   ├── pipeline.md         # SPSC queue design, backpressure, thread boundaries
 │   ├── protocol.md         # Binary wire specification & message layouts
 │   ├── performance.md      # Reproducible benchmark logs & hardware notes
-│   └── interview.md        # Talking points for systems & trading interviews
+│   └── troubleshooting.md  # Common local development diagnostics
 └── scripts/                # Local start & bootstrap scripts (sh, ps1)
 ```
 
