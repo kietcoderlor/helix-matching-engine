@@ -44,5 +44,5 @@ order is left unchanged. Self is not counted in FOK `available()`.
 
 ## Complexity
 
-Matching k fills is O(k) plus O(log P) for each emptied or created price
-level. See [order-book.md](order-book.md).
+- Matching k fills is O(k) plus O(log P) for each emptied or created price level. See [order-book.md](order-book.md).
+- Order cancellation and modification lookups are O(1) within a target `OrderBook` via hash index. At the `MatchingEngine` level, because inbound `CancelOrderCommand` and `ModifyOrderCommand` do not currently supply `symbol_id`, the engine scans across configured symbols (O(S) where S is symbol count). Passing `symbol_id` or maintaining a global order-to-symbol index would make engine dispatch strictly O(1).

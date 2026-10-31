@@ -41,7 +41,7 @@ Designed from first principles with a focus on low-latency trading systems engin
   │   │  • Non-blocking    │      │  • Authoritative   │   │
   │   │    WSAPoll / epoll ├──────►    Matching Loop   │   │
   │   │  • Binary Framing  │ SPSC │  • Price-Time FIFO │   │
-  │   │  • Egress Fan-out  │◄─────┤  • O(1) Lookups    │   │
+  │   │  • Egress Fan-out  │◄─────┤  • Fast Hash Index │   │
   │   └────────────────────┘ SPSC └────────────────────┘   │
   │                                 Independent Books:     │
   │                                 BTC-USDT, ETH-USDT...  │
@@ -55,6 +55,12 @@ Designed from first principles with a focus on low-latency trading systems engin
 | **Trading Terminal** | React 18, Vite, TypeScript | Responsive trading dashboard, symbol switching, live book depth, user order tracking, cancel/modify interactions. |
 | **Access Gateway** | Node.js, Express, `ws`, PostgreSQL | User authentication (scrypt), session token lifecycle, PostgreSQL migrations, connection mapping, protocol translation. |
 | **Exchange Core** | C++20 (MSVC / GCC / Clang) | Authoritative order books, sub-microsecond matching loop, deterministic state mutations, thread-safe SPSC communication. |
+
+### 🔍 Algorithmic Complexity & Order Lookup Boundaries
+
+- **Within an `OrderBook` ($O(1)$ lookup):** Each symbol book maintains hash indexes (`std::unordered_map`) mapping exchange order IDs (`by_id_`) and client order IDs (`by_client_`) to price-level list iterators. Canceling or reducing resting quantity is $O(1)$ (plus $O(\log P)$ only when an entire price level is deleted from the price map).
+- **Engine-Level Symbol Dispatch ($O(S)$ scan):** In the wire protocol, `CancelOrderCommand` and `ModifyOrderCommand` currently supply order IDs but omit `symbol_id`. Consequently, `MatchingEngine` iterates through the active symbol books ($O(S)$ where $S$ is the number of symbols).
+- **Design Improvement:** In production systems, passing `symbol_id` directly in cancellation frames or maintaining a global `order_id -> symbol_id` index at the engine level makes dispatch strictly $O(1)$ independent of the number of instruments.
 
 ---
 
@@ -133,13 +139,18 @@ Helix matching microbenchmark (in-process execute(), no sockets)
 engine:          helix-engine 0.1.0
 compiler:        MSVC 1950 / C++20
 build:           Release (NDEBUG)
-workload:        100,000 mixed orders (limit entry, crossing trades, cancels)
+workload:        100,000 new limit orders (75% resting GTC bids, 25% crossing IOC fills; zero cancels)
 wall_seconds:    0.088366 s
 throughput:      1,131,650 orders/sec
 latency_p50:     500 ns   (clock-resolution lower bound)
 latency_p99:     1,700 ns (1.70 µs)
 latency_max:     10.86 ms (heap reallocation & cache cold-miss)
 ```
+
+> ⚠️ **Important Benchmark Scope & Timer Resolution Clarifications:**
+> - **Matching Core Only (Not End-to-End):** This benchmark evaluates exclusively CPU execution time inside `MatchingEngine::execute()` in memory. It **does NOT represent end-to-end (wire-to-wire) system latency** — it deliberately isolates the matching core and excludes TCP socket I/O, OS networking stack overhead, binary serialization/deserialization, SPSC queue hops, and gateway/WebSocket hops.
+> - **Timer Resolution Floor:** On Windows with MSVC, `std::chrono::steady_clock` resolution is typically ~500 ns to 1 µs. The reported **p50 (500 ns)** is near this clock resolution limit and serves as a lower-bound ceiling rather than an exact physical wire-to-wire latency.
+> - **Workload Composition:** The current `bench_main.cpp` harness evaluates order book insertion and crossing execution (75% resting GTC limit bids, 25% aggressive IOC crossing matches against an opposite maker book). It does not currently inject `CancelOrderCommand` or `ModifyOrderCommand` operations.
 
 *(For full methodology and host specs, see [docs/performance.md](docs/performance.md).)*
 
@@ -240,6 +251,42 @@ cd gateway && npm test
 # 4. React Terminal Typecheck & Build
 cd terminal && npm run build
 ```
+
+---
+
+## 🎯 Real Market Data vs. Real Order Routing & Production Roadmap
+
+### Distinguishing Real Market Data from Order Routing
+
+1. **Real Market Data Ingestion:**
+   - Involves consuming market data feeds (Level 1 Top-of-Book or Level 2 Market Depth / Trades) from a data vendor or broker (e.g., Alpaca, Polygon, IEX, Databento).
+   - In this architecture, real market data feeds into the simulator to populate real-time order books, drive historical replay testing, or benchmark matching algorithms against actual market conditions.
+2. **Real Order Execution & Routing:**
+   - Real trading requires dispatching orders through a broker API (or direct market access / FIX gateway) to regulated execution venues.
+   - **Role of this project:** Helix is an educational **in-memory matching engine simulator and paper matching core**. It does not and should not attempt to replace a regulated exchange venue (like NASDAQ or CME). When trading live, execution occurs at the broker/exchange, while an internal matching engine is used for shadow evaluation, crossing networks, or dark pool simulation.
+
+### Roadmap to Production-Grade Trading Infrastructure
+
+To transition from an educational simulator toward a robust trading platform, the pragmatic and credible path involves:
+
+1. **Broker Paper-Trading Adapter:**
+   - Integrate with broker simulation environments (e.g., Alpaca Paper API or Interactive Brokers IBKR Paper Trading) to test real API connectivity, network jitter, and broker rejection handling without capital risk.
+2. **Standardized Order State Machine & Protocols:**
+   - Formally align order lifecycle transitions with the **FIX protocol** standard (Pending New, New, Partially Filled, Filled, Pending Cancel, Canceled, Rejected, Expired).
+   - Implement idempotent order deduplication via `ClOrdID`, reconnect sequence number synchronization, and handling for out-of-order execution reports.
+3. **Pre-Trade Risk Gateway (SEC Rule 15c3-5 Standards):**
+   - Implement mandatory pre-trade checks before any order reaches the outbound network:
+     - **Maximum order size & notional value** checks.
+     - **Price collar controls** (prevent fat-finger entries far from the NBBO).
+     - **Portfolio position & maximum drawdown** limits.
+     - **Symbol allowlists** and restricted instruments list.
+     - **Emergency Kill Switch** with immediate mass-cancel capability.
+     - **Safe Defaults:** Live routing disabled by default (`PAPER_MODE=true` hard-enforced).
+4. **State Persistence & Crash Recovery:**
+   - Add Write-Ahead Logging (WAL) / Event Journaling or periodic snapshotting to restore open orders, trade sequences, and book states after an unplanned process restart.
+5. **Staged Engineering Progression:**
+   - `Live Market Data Feeds` ➔ `Replay & Paper-Trading Validation` ➔ `Shadow Mode (Parallel simulation tracking)` ➔ `Rigorous Risk & Operational Audit` ➔ `Regulated Broker Access`.
+   - **Scope Transparency:** Helix is positioned honestly as a **C++ Matching Engine Simulator**, avoiding premature "production-ready" marketing claims until risk gates, recovery journals, and broker integrations are implemented and tested.
 
 ---
 
